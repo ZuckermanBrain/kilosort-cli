@@ -25,7 +25,7 @@ PHYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../npy-matlab/npy-matlab >/dev/
 # Define usage function
 function print_usage {
     echo ""
-    echo "Usage: ${0} -[dtcmnseh]"
+    echo "Usage: $(basename ${0}) -[dtcmnseh]"
     echo "========================================================================="
     echo "Description: Allows you to run Kilosort from GNU/Linux command line environment."
     echo "========================================================================="
@@ -39,39 +39,54 @@ function print_usage {
     echo "  -e : End time of the time range to sort."
     echo "  -h : Print this help message."
     echo "========================================================================="
-    echo "Example usage: ${0} -d /data -t /tmp -c ${HOME}/configFile384.m -m ${HOME}/neuropixPhase3A_kilosortChanMap.mat -n 384 -s 0 -e Inf"
+    echo "Example usage: $(basename ${0}) -d /data -t /tmp -c ${HOME}/configFile384.m -m ${HOME}/neuropixPhase3A_kilosortChanMap.mat -n 384 -s 0 -e Inf"
     echo ""
 }
 
 # Ensure that all the variables are populated.
 function sanity_check_variables {
 	if [ ! -d ${DATA} ] || [ -z ${DATA} ]; then
+		print_usage
+    		echo "========================================================================="
 		echo "Error: No data directory specified."
 		exit 1
 	fi
 	if [ ! -d ${TMP} ] || [ -z ${TMP} ]; then
+		print_usage
+    		echo "========================================================================="
 		echo "Error: No temporary directory specified."
 		exit 1
 	fi
 	if [ ! -f ${CONFIG} ] || [ -z ${CONFIG} ]; then
+		print_usage
+    		echo "========================================================================="
 		echo "Error: No config file specified."
+		exit 1
 	fi
 	if [ ! -f ${CHANMAP} ] || [ -z ${CHANMAP} ]; then
+		print_usage
+    		echo "========================================================================="
 		echo "Error: No channel map file specified."
 		exit 1
 	fi
 	[ -n "${NUMCHANS}" ] && [ "${NUMCHANS}" -eq "${NUMCHANS}" ] 2>/dev/null
 	if [ $? -ne 0 ]; then
+		print_usage
+    		echo "========================================================================="
    		echo "Error: ${NUMCHANS} is not a number"
 		exit 1
 	fi
 	[ -n "${START}" ] && [ "${START}" -eq "${START}" ] 2>/dev/null
 	if [ $? -ne 0 ]; then
+		print_usage
+    		echo "========================================================================="
    		echo "Error: ${START} is not a number"
 		exit 1
 	fi
 	[ -n "${STOP}" ] && [ "${STOP}" -eq "${STOP}" ] 2>/dev/null
 	if [ $? -ne 0 ] &&  [ "${STOP}" != "Inf" ]; then
+		print_usage
+    		echo "========================================================================="
    		echo "Error: ${STOP} is not a number"
 		exit 1
 	fi
@@ -106,6 +121,7 @@ do
 	    ;;
 	h)
 	    print_usage
+	    exit
 	    ;;
 	\?)
 	    echo "Invalid option: -$OPTARG" >&2

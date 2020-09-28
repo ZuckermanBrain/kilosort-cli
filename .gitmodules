@@ -1,6 +1,6 @@
 [submodule "Kilosort2"]
 	path = Kilosort2
-	url = git@github.com:MouseLand/Kilosort2.git
+	url = git@github.com:ZuckermanBrain/Kilosort2.git
 [submodule "npy-matlab"]
 	path = npy-matlab
 	url = git@github.com:kwikteam/npy-matlab.git

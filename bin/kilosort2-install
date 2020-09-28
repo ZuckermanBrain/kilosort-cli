@@ -17,24 +17,12 @@
 #   with this program; if not, write to the Free Software Foundation, Inc.,
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-# Define constants / identify paths for Kilosort2 directory
-SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# Define constants / identify path for Kilosort2.
 KSDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../Kilosort2 >/dev/null 2>&1 && pwd )"
 
-# Generate data and a channel map and store it in a temp directory
-DATA=$(mktemp -d)
-# Store temporary files in another temp directory
-TMP=$(mktemp -d)
-# The eMouse simulation creates dummy data with 64 channels by default.
-# We use this here because that's what the config file uses.
-NUMCHANS=64
+# Load prerequisite environment modules.
+ml load matlab/2018a
+ml load cuda@9.0.176
 
-# Run the batch function to generate dummy data.
-matlab -nodesktop -nodisplay -nosplash -r "cd('${SCRIPTDIR}'); makeemousebatch('${KSDIR}','${DATA}',${NUMCHANS}); exit;"
-
-# Run kilosort2 CLI wrapper on fake data.
-kilosort2 -d ${DATA} -t ${TMP}  -c ${KSDIR}/eMouse_drift/config_eMouse_drift_KS2.m -m ${DATA}/chanMap_3B_64sites.mat -n ${NUMCHANS} -s 0 -e Inf
-
-echo "Test finished."
-echo "Data directory: ${DATA}"
-echo "Temp directory: ${TMP}"
+# Run the batch function with MATLAB
+matlab -nodesktop -nodisplay -nosplash -r "cd('${KSDIR}/CUDA'); run('mexGPUall.m'); exit;"
