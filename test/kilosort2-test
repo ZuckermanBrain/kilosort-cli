@@ -1,0 +1,52 @@
+#!/bin/bash
+#   GPLv2 License
+#
+#   Copyright (c) 2020, Trustees of Columbia University in the City of New York.
+#
+#   This program is free software; you can redistribute it and/or modify
+#   it under the terms of the GNU General Public License as published by
+#   the Free Software Foundation; either version 2 of the License, or
+#   (at your option) any later version.
+#
+#   This program is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU General Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program; if not, write to the Free Software Foundation, Inc.,
+#   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+# Define constants / identify paths for Kilosort2 directory
+SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+KSDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../Kilosort2 >/dev/null 2>&1 && pwd )"
+
+# Define usage function
+function print_usage {
+    echo ""
+    echo "Usage: ${0}"
+    echo "========================================================================="
+    echo "Description: Automatically generates a dummy dataset within a temp directory and runs the Kilosort2 wrapper script."
+    echo "Use this to test your installation."
+    echo "========================================================================="
+    echo "This script takes no arguments."
+    echo ""
+}
+
+# Generate data and a channel map and store it in a temp directory
+DATA=$(mktemp -d)
+# Store temporary files in another temp directory
+TMP=$(mktemp -d)
+# The eMouse simulation creates dummy data with 64 channels by default.
+# We use this here because that's what the config file uses.
+NUMCHANS=64
+
+# Run the batch function to generate dummy data.
+matlab -nodesktop -nodisplay -nosplash -r "cd('${SCRIPTDIR}'); makeemousebatch('${KSDIR}','${DATA}',${NUMCHANS}); exit;"
+
+# Run kilosort2 CLI wrapper on fake data.
+kilosort2 -d ${DATA} -t ${TMP}  -c ${KSDIR}/eMouse_drift/config_eMouse_drift_KS2.m -m ${DATA}/chanMap_3B_64sites.mat -n ${NUMCHANS} -s 0 -e Inf
+
+echo "Test finished.
+echo "Data directory: ${DATA}"
+echo "Temp directory: ${TMP}"
