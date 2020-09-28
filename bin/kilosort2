@@ -1,0 +1,133 @@
+#!/bin/bash
+# BSD 3-Clause License
+# 
+# Copyright (c) 2020, Trustees of Columbia University in the City of New York.
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+# 
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+# 
+# 3. Neither the name of Columbia University nor the names of its
+#    contributors may be used to endorse or promote products derived from
+#    this software without specific prior written permission.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# Define constants / identify paths for Kilosort2 and npy-matlab directories.
+KSDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../Kilosort2 >/dev/null 2>&1 && pwd )"
+PHYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../npy-matlab/npy-matlab >/dev/null 2>&1 && pwd )"
+
+# Define usage function
+function print_usage {
+    echo ""
+    echo "Usage: ${0} -[dtcmnseh]"
+    echo "========================================================================="
+    echo "Description: Allows you to run Kilosort from GNU/Linux command line environment."
+    echo "========================================================================="
+    echo "All of the following command line options, followed by an argument, are required:"
+    echo "  -d : The path to the directory that contains the raw data binary file."
+    echo "  -t : The path to temporary scratch space (same size as data, should be on a fast SSD)."
+    echo "  -c : The path to your config file (.m format)."
+    echo "  -m : The path to the channel map file (.mat format)."
+    echo "  -n : The total number of channels in your recording."
+    echo "  -s : Start time of the time range to sort."
+    echo "  -e : End time of the time range to sort."
+    echo "  -h : Print this help message."
+    echo "========================================================================="
+    echo "Example usage: ${0} -d /data -t /tmp -c ${HOME}/configFile384.m -m ${HOME}/neuropixPhase3A_kilosortChanMap.mat -n 384 -s 0 -e Inf"
+    echo ""
+}
+
+# Ensure that all the variables are populated.
+function sanity_check_variables {
+	if [ ! -d ${DATA} ] || [ -z ${DATA} ]; then
+		echo "Error: No data directory specified."
+		exit 1
+	fi
+	if [ ! -d ${TMP} ] || [ -z ${TMP} ]; then
+		echo "Error: No temporary directory specified."
+		exit 1
+	fi
+	if [ ! -f ${CONFIG} ] || [ -z ${CONFIG} ]; then
+		echo "Error: No config file specified."
+	fi
+	if [ ! -f ${CHANMAP} ] || [ -z ${CHANMAP} ]; then
+		echo "Error: No channel map file specified."
+		exit 1
+	fi
+	[ -n "${NUMCHANS}" ] && [ "${NUMCHANS}" -eq "${NUMCHANS}" ] 2>/dev/null
+	if [ $? -ne 0 ]; then
+   		echo "Error: ${NUMCHANS} is not a number"
+		exit 1
+	fi
+	[ -n "${START}" ] && [ "${START}" -eq "${START}" ] 2>/dev/null
+	if [ $? -ne 0 ]; then
+   		echo "Error: ${START} is not a number"
+		exit 1
+	fi
+	[ -n "${STOP}" ] && [ "${STOP}" -eq "${STOP}" ] 2>/dev/null
+	if [ $? -ne 0 ] &&  [ "${STOP}" != "Inf" ]; then
+   		echo "Error: ${STOP} is not a number"
+		exit 1
+	fi
+}
+
+
+# Parse flags
+while getopts ":d:t:c:m:n:s:e:h" opt
+do
+    case $opt in
+	d)
+	    DATA=${OPTARG}
+	    ;;
+	t)
+	    TMP=${OPTARG}
+	    ;;
+	c)
+	    CONFIG=${OPTARG}
+	    ;;
+	m)
+	    CHANMAP=${OPTARG}
+	    ;;
+	n)
+	    NUMCHANS=${OPTARG}
+	    ;;
+	s)
+	    START=${OPTARG}
+	    ;;
+	e)
+	    STOP=${OPTARG}
+	    ;;
+	h)
+	    print_usage
+	    ;;
+	\?)
+	    echo "Invalid option: -$OPTARG" >&2
+	    exit 1
+	    ;;
+	:)
+	    echo "Option -$OPTARG requires an argument." >&2
+	    exit 1
+	    ;;
+    esac
+done
+
+sanity_check_variables
+# Run the batch function with MATLAB
+matlab -nodesktop -nodisplay -nosplash -r "kilosortbatch('${KSDIR}','${PHYDIR}','${DATA}','${TMP}','${CONFIG}','${CHANMAP}',${NUMCHANS},${START},${STOP}); exit;"
