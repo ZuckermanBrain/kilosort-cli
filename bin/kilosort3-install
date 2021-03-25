@@ -22,7 +22,7 @@ KSDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../Kilosort >/dev/null 2>&1 && p
 
 # Load prerequisite environment modules.
 ml load matlab/2018a
-ml load cuda@9.0.176
+ml load cuda/9.0.176
 
 # Run the batch function with MATLAB
 matlab -nodesktop -nodisplay -nosplash -r "cd('${KSDIR}/CUDA'); run('mexGPUall.m'); exit;"
