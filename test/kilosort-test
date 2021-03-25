@@ -19,7 +19,7 @@
 
 # Define constants / identify paths for Kilosort2 directory
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-KSDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../Kilosort2 >/dev/null 2>&1 && pwd )"
+KSDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../Kilosort >/dev/null 2>&1 && pwd )"
 
 # Generate data and a channel map and store it in a temp directory
 DATA=$(mktemp -d)

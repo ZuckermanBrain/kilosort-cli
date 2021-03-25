@@ -19,7 +19,7 @@
 
 # Define constants / identify paths for Kilosort2 and npy-matlab directories.
 SCRIPTDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-KSDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../Kilosort2 >/dev/null 2>&1 && pwd )"
+KSDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../Kilosort >/dev/null 2>&1 && pwd )"
 PHYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../npy-matlab/npy-matlab >/dev/null 2>&1 && pwd )"
 
 # Define usage function

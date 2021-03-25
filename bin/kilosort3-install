@@ -18,7 +18,7 @@
 #   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 # Define constants / identify path for Kilosort2.
-KSDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../Kilosort2 >/dev/null 2>&1 && pwd )"
+KSDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../Kilosort >/dev/null 2>&1 && pwd )"
 
 # Load prerequisite environment modules.
 ml load matlab/2018a
