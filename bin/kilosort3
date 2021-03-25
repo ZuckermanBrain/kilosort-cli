@@ -25,7 +25,7 @@ PHYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )"/../npy-matlab/npy-matlab >/dev/
 # Define usage function
 function print_usage {
     echo ""
-    echo "Usage: $(basename ${0}) -[dtcmnseh]"
+    echo "Usage: $(basename ${0}) -[dtcmnsehrfb]"
     echo "========================================================================="
     echo "Description: Allows you to run Kilosort from GNU/Linux command line environment."
     echo "========================================================================="
@@ -37,6 +37,9 @@ function print_usage {
     echo "  -n : The total number of channels in your recording."
     echo "  -s : Start time of the time range to sort."
     echo "  -e : End time of the time range to sort."
+    echo "  -r : Spatial smoothness constant for registration."
+    echo "  -f : High-pass more aggressively."
+    echo "  -b : Blocks for registration. 0 turns it off, 1 does rigid registration. Replaces *datashift* option."
     echo "  -h : Print this help message."
     echo "========================================================================="
     echo "Example usage: $(basename ${0}) -d /data -t /tmp -c ${HOME}/configFile384.m -m ${HOME}/neuropixPhase3A_kilosortChanMap.mat -n 384 -s 0 -e Inf"
@@ -95,7 +98,7 @@ function sanity_check_variables {
 
 # Parse flags
 # Automatically convert paths to absolute paths
-while getopts ":d:t:c:m:n:s:e:h" opt
+while getopts ":d:t:c:m:n:s:e:h:r:f:b:" opt
 do
     case $opt in
 	d)
@@ -119,6 +122,15 @@ do
 	e)
 	    STOP=${OPTARG}
 	    ;;
+	r)
+	    SIG=${OPTARG}
+	    ;;
+	f)
+	    FSHIGH=${OPTARG}
+	    ;;
+	b)
+	    NBLOCKS=${OPTARG}
+	    ;;
 	h)
 	    print_usage
 	    exit
@@ -136,4 +148,4 @@ done
 
 sanity_check_variables
 # Run the batch function with MATLAB
-matlab -nodesktop -nodisplay -nosplash -r "cd('${SCRIPTDIR}'); kilosortbatch('${KSDIR}','${PHYDIR}','${DATA}','${TMP}','${CONFIG}','${CHANMAP}',${NUMCHANS},${START},${STOP}); exit;"
+matlab -nodesktop -nodisplay -nosplash -r "cd('${SCRIPTDIR}'); kilosortbatch('${KSDIR}','${PHYDIR}','${DATA}','${TMP}','${CONFIG}','${CHANMAP}',${NUMCHANS},${START},${STOP},${SIG},${FSHIGH},${NBLOCKS}); exit;"

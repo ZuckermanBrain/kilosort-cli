@@ -21,7 +21,7 @@
 % This is a modified version of main_kilosort.m.
 % Original Source: https://github.com/MouseLand/Kilosort2/blob/master/main_kilosort.m
 
-function kilosortbatch(ksdir,phydir,data,tmp,config,chanmap,numchans,start,stop)
+function kilosortbatch(ksdir,phydir,data,tmp,config,chanmap,numchans,start,stop,sig,fshigh,nblocks)
     % Sanity checks
     if ~(exist('ksdir','var'))
         error(['ksdir not defined'])
@@ -50,6 +50,29 @@ function kilosortbatch(ksdir,phydir,data,tmp,config,chanmap,numchans,start,stop)
     if ~(exist('stop','var'))
         error(['stop not defined'])
     end
+    if ~(exist('sig','var'))
+        error(['sig not defined'])
+    end
+    if ~(exist('fshigh','var'))
+        error(['fshigh not defined'])
+    end
+    if ~(exist('nblocks','var'))
+        error(['nblocks not defined'])
+    end
+
+    % Silly CUDA 9 Error workaround (only happens on Turing and above cards)
+    % See https://www.mathworks.com/matlabcentral/answers/437756-how-can-i-recompile-the-gpu-libraries
+    % Program will break at the following line otherwise:
+    % rez                = template_learning(rez, tF, st3);
+    warning off parallel:gpu:device:DeviceLibsNeedsRecompiling
+    try
+	gpuArray.eye(2)^2;
+    catch ME
+    end
+    try
+        nnet.internal.cnngpu.reluForward(1);
+    catch ME
+    end
 
     % Actual program here.
     % Import dependencies.
@@ -70,61 +93,29 @@ function kilosortbatch(ksdir,phydir,data,tmp,config,chanmap,numchans,start,stop)
     	ops.chanMap = fullfile(data, fs(1).name);
     end
 
+    ops.sig        = sig;  % spatial smoothness constant for registration
+    ops.fshigh     = fshigh; % high-pass more aggresively
+    ops.nblocks    = nblocks; % blocks for registration. 0 turns it off, 1 does rigid registration. Replaces "datashift" option. 
+
     % find the binary file
     fs          = [dir(fullfile(data, '*.bin')) dir(fullfile(data, '*.dat'))];
     ops.fbinary = fullfile(data, fs(1).name);
     
-    % preprocess data to create temp_wh.dat
-    rez = preprocessDataSub(ops);
-    
-    % time-reordering as a function of drift
-    rez = clusterSingleBatches(rez);
-    
-    % saving here is a good idea, because the rest can be resumed after loading rez
-    save(fullfile(data, 'rez.mat'), 'rez', '-v7.3');
-    
-    % main tracking and template matching algorithm
-    rez = learnAndSolve8b(rez);
-    
-    % final merges
-    rez = find_merges(rez, 1);
-    
-    % final splits by SVD
-    rez = splitAllClusters(rez, 1);
-    
-    % final splits by amplitudes
-    rez = splitAllClusters(rez, 0);
-    
-    % decide on cutoff
-    rez = set_cutoff(rez);
-    
-    fprintf('found %d good units \n', sum(rez.good>0))
-    
-    % write to Phy
-    fprintf('Saving results to Phy  \n')
-    rezToPhy(rez, data);
-    
-    %% if you want to save the results to a Matlab file...
-    
-    % discard features in final rez file (too slow to save)
-    rez.cProj = [];
-    rez.cProjPC = [];
-    
-    % final time sorting of spikes, for apps that use st3 directly
-    [~, isort]   = sortrows(rez.st3);
-    rez.st3      = rez.st3(isort, :);
-    
-    % Ensure all GPU arrays are transferred to CPU side before saving to .mat
-    rez_fields = fieldnames(rez);
-    for i = 1:numel(rez_fields)
-        field_name = rez_fields{i};
-        if(isa(rez.(field_name), 'gpuArray'))
-            rez.(field_name) = gather(rez.(field_name));
-        end
-    end
-    
+
+    rez                = preprocessDataSub(ops);
+    rez                = datashift2(rez, 1);
+
+    [rez, st3, tF]     = extract_spikes(rez);
+
+    rez                = template_learning(rez, tF, st3);
+
+    [rez, st3, tF]     = trackAndSort(rez);
+
+    rez                = final_clustering(rez, tF, st3);
+
+    rez                = find_merges(rez, 1);
+
     % save final results as rez2
-    fprintf('Saving final results in rez2  \n')
-    fname = fullfile(data, 'rez2.mat');
-    save(fname, 'rez', '-v7.3');
+    fprintf('Saving final results in phy \n')
+    rezToPhy2(rez, data);
 end

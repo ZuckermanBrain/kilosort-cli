@@ -33,7 +33,7 @@ NUMCHANS=64
 matlab -nodesktop -nodisplay -nosplash -r "cd('${SCRIPTDIR}'); makeemousebatch('${KSDIR}','${DATA}',${NUMCHANS}); exit;"
 
 # Run kilosort2 CLI wrapper on fake data.
-kilosort3 -d ${DATA} -t ${TMP}  -c ${KSDIR}/eMouse_drift/config_eMouse_drift_KS2.m -m ${DATA}/chanMap_3B_64sites.mat -n ${NUMCHANS} -s 0 -e Inf
+kilosort3 -d ${DATA} -t ${TMP}  -c ${KSDIR}/eMouse_drift/config_eMouse_drift_KS2.m -m ${DATA}/chanMap_3B_64sites.mat -n ${NUMCHANS} -s 0 -e Inf -r 20 -f 300 -b 5
 
 echo "Test finished."
 echo "Data directory: ${DATA}"
